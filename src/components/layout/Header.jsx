@@ -114,13 +114,11 @@ const Header = () => {
                                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                                     className="flex items-center gap-2 p-1 pr-3 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                                 >
-                                    <img
-                                        src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}`}
-                                        alt={user?.name}
-                                        className="w-8 h-8 rounded-full"
-                                    />
+                                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold text-sm border border-primary-200 dark:border-primary-700/50">
+                                        {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                                    </div>
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 max-w-[100px] truncate">
-                                        {user?.name || 'User'}
+                                        {user?.name || user?.email?.split('@')[0] || 'User'}
                                     </span>
                                 </motion.button>
 
@@ -136,7 +134,7 @@ const Header = () => {
                                             className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 z-20"
                                         >
                                             <div className="p-3 border-b border-slate-100 dark:border-slate-700 mb-2">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name || user?.email?.split('@')[0]}</p>
                                                 <p className="text-xs text-slate-500 truncate mb-1">{user?.email}</p>
                                                 {user?.createdAt && (
                                                     <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
@@ -244,11 +242,9 @@ const Header = () => {
                         ) : (
                             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
                                 <div className="flex items-center gap-3 px-4 mb-4">
-                                    <img
-                                        src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}`}
-                                        alt={user?.name}
-                                        className="w-10 h-10 rounded-full"
-                                    />
+                                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold text-lg border border-primary-200 dark:border-primary-700/50">
+                                        {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                                    </div>
                                     <div>
                                         <p className="font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
                                         <p className="text-xs text-slate-500">{user?.email}</p>
