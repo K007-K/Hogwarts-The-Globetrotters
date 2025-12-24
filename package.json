@@ -10,16 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/geist-mono": "^5.2.7",
+    "@fontsource/geist-sans": "^5.2.5",
     "@google/generative-ai": "^0.24.1",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@react-three/fiber": "^9.4.2",
     "@supabase/supabase-js": "^2.86.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "framer-motion": "^12.23.25",
+    "framer-motion": "^12.23.26",
     "jspdf": "^3.0.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.556.0",
+    "mathjs": "^14.9.1",
     "nanoid": "^5.1.6",
+    "next-themes": "^0.4.6",
+    "ogl": "^1.0.11",
     "react": "^19.2.0",
+    "react-bits": "^1.0.5",
     "react-dom": "^19.2.0",
     "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
@@ -28,6 +36,7 @@
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.167.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

@@ -4,7 +4,6 @@ import { User, Mail, Phone, Save, CreditCard, Calendar, Plane, Hotel, Train, Moo
 import useAuthStore from '../store/authStore';
 import useItineraryStore from '../store/itineraryStore';
 import useBookingStore from '../store/bookingStore';
-import ThemeToggle from '../components/ui/ThemeToggle';
 
 const Settings = () => {
     const { user, profile: authProfile, updateProfile, deleteAccount, isLoading } = useAuthStore();
@@ -79,8 +78,8 @@ const Settings = () => {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-12 bg-slate-50 dark:bg-slate-900 transition-colors">
-            <div className="container-custom max-w-5xl mx-auto space-y-8">
+        <div className="min-h-screen pt-28 pb-16 bg-slate-50 dark:bg-slate-900 transition-colors">
+            <div className="container-custom max-w-6xl mx-auto px-6 md:px-8 space-y-10">
 
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -304,26 +303,6 @@ const Settings = () => {
                         >
                             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Preferences</h3>
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-2.5 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                                            <Moon className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-slate-900 dark:text-slate-100">Dark Mode</p>
-                                            <p className="text-xs text-slate-500">Toggle application theme</p>
-                                        </div>
-                                    </div>
-                                    <div className="pointer-events-none">
-                                        {/* This is just visual context, the ThemeToggle component handles the logic globally, but here we might want a custom toggle switch. 
-                                            For now, let's just place the existing ThemeToggle here or rely on the header. 
-                                            Actually, let's put the ThemeToggle right here. */}
-                                        <div className="pointer-events-auto">
-                                            <ThemeToggle />
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group">
                                     <div className="flex items-center gap-4">
                                         <div className="p-2.5 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl text-yellow-600 dark:text-yellow-400 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">

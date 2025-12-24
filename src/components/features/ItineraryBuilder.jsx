@@ -9,8 +9,12 @@ import {
     CheckCircle2, Circle, Star, AlertCircle
 } from 'lucide-react';
 import useItineraryStore from '../../store/itineraryStore';
-import { generateTripPlan, getHiddenGems } from '../../api/groq';
+import { generateTripPlan, getHiddenGems, validateTripBudget } from '../../api/groq';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import Map from '../Map';
+import { Button } from '../ui/Button';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 
 const ACTIVITY_TYPES = [
     { value: 'sightseeing', label: 'Sightseeing', icon: Camera, color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' },
@@ -26,16 +30,18 @@ const ItineraryBuilder = () => {
     const navigate = useNavigate();
     const {
         trips,
+        updateTrip,
         addActivity,
         reorderActivities,
         deleteActivity,
         toggleActivityComplete,
-        rateActivity
     } = useItineraryStore();
 
     const [trip, setTrip] = useState(null);
     const [selectedDay, setSelectedDay] = useState(null);
     const [isAddingActivity, setIsAddingActivity] = useState(false);
+    const [activeTab, setActiveTab] = useState('itinerary'); // 'itinerary' | 'budget'
+
     const [newActivity, setNewActivity] = useState({
         title: '',
         time: '',
@@ -48,26 +54,39 @@ const ItineraryBuilder = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [hiddenGems, setHiddenGems] = useState([]);
     const [isLoadingGems, setIsLoadingGems] = useState(false);
-    const [toast, setToast] = useState(null); // Simple toast state
+    const [toast, setToast] = useState(null);
+
+    // Budget Analysis State
+    const [budgetInput, setBudgetInput] = useState('');
+    const [currencyInput, setCurrencyInput] = useState('USD');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisReport, setAnalysisReport] = useState(null);
+    const [sessionBudgetChecked, setSessionBudgetChecked] = useState(false); // Ref to prevent loop
 
     useEffect(() => {
-        // Sync local trip state with store
         const foundTrip = trips.find(t => t.id === id);
         if (foundTrip) {
             setTrip(foundTrip);
             if (!selectedDay) setSelectedDay(foundTrip.days[0]?.id);
 
-            // Load hidden gems if not loaded
+            // Load gems
             if (hiddenGems.length === 0 && !isLoadingGems) {
                 setIsLoadingGems(true);
                 getHiddenGems(foundTrip.destination)
                     .then(gems => setHiddenGems(gems || []))
                     .finally(() => setIsLoadingGems(false));
             }
+
+            // AUTO-SWITCH TO BUDGET TAB if missing (Only once per session)
+            if (!sessionBudgetChecked && (foundTrip.budget === 0 || foundTrip.budget === null) && !foundTrip.budget_skipped) {
+                setActiveTab('budget');
+                setSessionBudgetChecked(true); // Mark as checked so we don't force it again
+                if (foundTrip.currency) setCurrencyInput(foundTrip.currency);
+            }
         } else {
             navigate('/itinerary');
         }
-    }, [id, trips, navigate, selectedDay, hiddenGems.length, isLoadingGems]);
+    }, [id, trips, navigate, selectedDay, hiddenGems.length, isLoadingGems, sessionBudgetChecked]);
 
     const showToast = (message) => {
         setToast(message);
@@ -75,34 +94,24 @@ const ItineraryBuilder = () => {
     };
 
     const handleSave = () => {
-        // In this app, state is auto-persisted by Zustand, so "Save" is just a visual confirmation
         showToast("✅ Trip saved successfully!");
     };
 
     const handleShare = async () => {
         const shareData = {
             title: `Trip to ${trip.destination}`,
-            text: `Check out my trip to ${trip.destination}! I'm going for ${trip.days.length} days.`,
+            text: `Check out my trip to ${trip.destination}!`,
             url: window.location.href
         };
-
         try {
             if (navigator.share) {
                 await navigator.share(shareData);
-                showToast("🔗 Shared successfully!");
             } else {
                 await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-                showToast("🔗 Link copied to clipboard!");
+                showToast("🔗 Link copied!");
             }
         } catch (err) {
             console.error("Error sharing:", err);
-            // Fallback if share fails (e.g. user cancelled)
-            try {
-                await navigator.clipboard.writeText(window.location.href);
-                showToast("🔗 Link copied to clipboard!");
-            } catch (clipboardErr) {
-                showToast("❌ Failed to share");
-            }
         }
     };
 
@@ -110,20 +119,16 @@ const ItineraryBuilder = () => {
         if (!trip) return;
         setIsGenerating(true);
         try {
-            // Updated to pass currency and budget tier
             const plan = await generateTripPlan(
                 trip.destination,
                 trip.days.length,
                 trip.budget || 2000,
                 trip.travelers || 1,
                 trip.currency || 'USD',
-                trip.days, // Pass the days array containing location info
-                trip.budgetTier || 'mid-range' // Pass budget tier
+                trip.days,
+                trip.budgetTier || 'mid-range'
             );
-
             if (plan && plan.days) {
-                // Populate the store with generated activities
-                // We map generated days to existing trip day IDs
                 plan.days.forEach((genDay, index) => {
                     const storeDayId = trip.days[index]?.id;
                     if (storeDayId && genDay.activities) {
@@ -134,7 +139,7 @@ const ItineraryBuilder = () => {
                                 type: activity.type || 'sightseeing',
                                 location: activity.location,
                                 notes: activity.notes,
-                                safety_warning: activity.safety_warning // [NEW] Pass safety warning
+                                safety_warning: activity.safety_warning
                             });
                         });
                     }
@@ -152,403 +157,315 @@ const ItineraryBuilder = () => {
     const handleAddActivity = (e) => {
         e.preventDefault();
         if (!newActivity.title || !newActivity.time) return;
-
         addActivity(trip.id, selectedDay, newActivity);
         setIsAddingActivity(false);
-        setNewActivity({
-            title: '',
-            time: '',
-            location: '',
-            type: 'sightseeing',
-            notes: ''
-        });
+        setNewActivity({ title: '', time: '', location: '', type: 'sightseeing', notes: '' });
         showToast("Activity added!");
     };
 
     const handleAddGem = (gem) => {
         if (!selectedDay) return;
         addActivity(trip.id, selectedDay, {
-            title: gem.title,
-            time: '14:00', // Default time
-            type: 'sightseeing',
-            location: trip.destination, // Default location context
-            notes: gem.description
+            title: gem.title, time: '14:00', type: 'sightseeing', location: trip.destination, notes: gem.description
         });
-        showToast(`Added ${gem.title} to itinerary!`);
+        showToast(`Added ${gem.title}!`);
     };
 
-    const handleReorder = (dayId, newOrder) => {
-        reorderActivities(trip.id, dayId, newOrder);
+    const handleAnalyzeBudget = async () => {
+        if (!budgetInput) return;
+        setIsAnalyzing(true);
+        try {
+            const result = await validateTripBudget({
+                destination: trip.destination, days: trip.days.length, travelers: trip.travelers, budget: parseFloat(budgetInput), currency: currencyInput
+            });
+            setAnalysisReport(result.report);
+        } catch (error) {
+            showToast(`❌ Analysis failed: ${error.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleSaveBudget = async () => {
+        if (!budgetInput) return;
+        await updateTrip(trip.id, {
+            budget: parseFloat(budgetInput), currency: currencyInput, budget_skipped: false
+        });
+        showToast("✅ Budget updated!");
     };
 
     if (!trip) return null;
-
     const activeDay = trip.days.find(d => d.id === selectedDay);
-
-    // Collect all activities for the map
     const allActivities = trip.days.flatMap(d => d.activities);
 
     return (
-        <div className="min-h-screen pt-20 pb-10 bg-slate-50 dark:bg-slate-900">
-            {/* Toast Notification */}
+        <div className="fixed inset-0 z-50 bg-background overflow-hidden flex flex-col">
+            {/* Toast */}
             <AnimatePresence>
                 {toast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="fixed top-24 right-4 z-50 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-lg font-medium"
-                    >
-                        {toast}
-                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-24 right-4 z-[70] bg-foreground text-background px-6 py-3 rounded-xl shadow-lg font-medium">{toast}</motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-20 z-30">
-                <div className="container-custom py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => navigate('/itinerary')}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                            </button>
-                            <div>
-                                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{trip.title}</h1>
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
-                                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {trip.destination}</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(trip.startDate).toLocaleDateString()}</span>
-                                    <span>•</span>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        {trip.currency === 'INR' ? '₹' : trip.currency === 'EUR' ? '€' : trip.currency === 'GBP' ? '£' : trip.currency === 'JPY' ? '¥' : '$'}
-                                        {trip.budget}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={handleShare} className="btn btn-secondary px-4 py-2 text-sm flex items-center gap-2">
-                                <Share2 className="w-4 h-4" /> Share
-                            </button>
-                            <button onClick={handleSave} className="btn btn-primary px-4 py-2 text-sm flex items-center gap-2">
-                                <Save className="w-4 h-4" /> Save
-                            </button>
-                        </div>
-                    </div>
+            {/* FIXED TABS HEADER */}
+            <header className="flex-none bg-background/80 glass border-b border-border z-50 h-16 flex items-center justify-between px-4">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/itinerary')} className="gap-2">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Back</span>
+                </Button>
 
-                    {/* Day Selector */}
-                    <div className="flex gap-2 overflow-x-auto mt-6 pb-2 no-scrollbar">
-                        {trip.days.map((day) => (
+                {/* Center: Tabs Switcher */}
+                <div className="flex bg-muted p-1 rounded-xl relative">
+                    {/* Animated Background for Tab */}
+                    <div className="relative flex">
+                        {['itinerary', 'budget'].map((tab) => (
                             <button
-                                key={day.id}
-                                onClick={() => setSelectedDay(day.id)}
-                                className={`flex-shrink-0 px-4 py-2 rounded-xl font-medium transition-all ${selectedDay === day.id
-                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`relative px-6 py-1.5 rounded-lg text-sm font-bold transition-colors z-10 flex items-center gap-2 ${activeTab === tab ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
-                                Day {day.dayNumber}
+                                {activeTab === tab && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute inset-0 bg-background shadow-sm rounded-lg -z-10"
+                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                )}
+                                {tab === 'itinerary' ? <MapIcon className="w-4 h-4" /> : <span>💰</span>}
+                                <span className="capitalize">{tab}</span>
                             </button>
                         ))}
                     </div>
                 </div>
-            </div>
 
-            <div className="container-custom mt-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content - Activities */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                                Day {activeDay?.dayNumber} Itinerary
-                            </h2>
-                            <button
-                                onClick={() => setIsAddingActivity(true)}
-                                className="btn btn-primary px-4 py-2 text-sm flex items-center gap-2"
-                            >
-                                <Plus className="w-4 h-4" /> Add Activity
-                            </button>
-                        </div>
+                <div className="w-20"></div> {/* Spacer */}
+            </header>
 
-                        {activeDay?.activities.length === 0 ? (
-                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-                                <Sparkles className="w-12 h-12 text-primary-300 mx-auto mb-4" />
-                                <p className="text-slate-500 dark:text-slate-400 mb-6">No activities planned yet.</p>
+            {/* Main Content Area - Scrollable */}
+            <div className="flex-grow overflow-hidden relative">
+                <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-6">
+                    <div className="container-custom max-w-7xl mx-auto pb-20">
 
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <button
-                                        onClick={handleGenerateItinerary}
-                                        disabled={isGenerating}
-                                        className="btn bg-gradient-to-r from-primary-600 to-accent-600 text-white flex items-center gap-2 justify-center shadow-lg shadow-primary-500/20"
-                                    >
-                                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                        {isGenerating ? 'Planning Trip...' : 'Auto-Generate Itinerary'}
-                                    </button>
-                                    <button
-                                        onClick={() => setIsAddingActivity(true)}
-                                        className="btn btn-secondary flex items-center gap-2 justify-center"
-                                    >
-                                        <Plus className="w-4 h-4" /> Manually Add
-                                    </button>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-4">AI will plan full day schedule based on budget ({trip.currency}).</p>
-                            </div>
-                        ) : (
-                            <Reorder.Group
-                                axis="y"
-                                values={activeDay?.activities || []}
-                                onReorder={(newOrder) => reorderActivities(trip.id, activeDay.id, newOrder)}
-                                className="space-y-4"
-                            >
-                                {activeDay?.activities.map((activity) => {
-                                    const typeInfo = ACTIVITY_TYPES.find(t => t.value === activity.type) || ACTIVITY_TYPES[0];
-                                    const Icon = typeInfo.icon;
-
-                                    return (
-                                        <Reorder.Item
-                                            key={activity.id}
-                                            value={activity}
-                                            className={`p-4 rounded-2xl shadow-sm border transition-all ${activity.isCompleted
-                                                ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 opacity-75'
-                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
-                                                } ${activity.safety_warning ? 'border-l-4 border-l-red-500' : ''}`}
-                                        >
-                                            <div className="flex items-start gap-4">
-                                                <div className="mt-2 text-slate-400 cursor-grab active:cursor-grabbing">
-                                                    <GripVertical className="w-5 h-5" />
-                                                </div>
-
-                                                {/* Checkbox */}
-                                                <button
-                                                    onClick={() => toggleActivityComplete(trip.id, activeDay.id, activity.id)}
-                                                    className={`mt-2 transition-colors ${activity.isCompleted ? 'text-green-500' : 'text-slate-300 hover:text-slate-400'}`}
-                                                >
-                                                    {activity.isCompleted ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
-                                                </button>
-
-                                                <div className={`p-3 rounded-xl ${typeInfo.color}`}>
-                                                    <Icon className="w-5 h-5" />
-                                                </div>
-
-                                                <div className="flex-grow">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <h3 className={`font-semibold text-lg ${activity.isCompleted ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-slate-100'}`}>
-                                                            {activity.title}
-                                                        </h3>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                                                                <Clock className="w-4 h-4" />
-                                                                {activity.time}
-                                                            </div>
-                                                            <button
-                                                                onClick={() => deleteActivity(trip.id, activeDay.id, activity.id)}
-                                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                                title="Delete Activity"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Safety Warning Alert */}
-                                                    {activity.safety_warning && (
-                                                        <div className="mb-2 flex gap-2 items-start bg-red-50 dark:bg-red-900/20 p-2.5 rounded-lg border border-red-100 dark:border-red-800/30">
-                                                            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                                                            <p className="text-xs font-semibold text-red-700 dark:text-red-300 leading-tight">
-                                                                Safety Alert: <span className="font-normal opacity-90">{activity.safety_warning}</span>
-                                                            </p>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                                        {activity.location && (
-                                                            <span className="flex items-center gap-1">
-                                                                <MapPin className="w-3 h-3" /> {activity.location}
-                                                            </span>
-                                                        )}
-                                                        <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-medium uppercase tracking-wider">
-                                                            {typeInfo.label}
-                                                        </span>
-                                                    </div>
-
-                                                    {activity.notes && (
-                                                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg">
-                                                            {activity.notes}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Rating System - Only show if completed */}
-                                                    {activity.isCompleted && (
-                                                        <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-                                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rate experience:</span>
-                                                            <div className="flex gap-1">
-                                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                                    <button
-                                                                        key={star}
-                                                                        onClick={() => rateActivity(trip.id, activeDay.id, activity.id, star)}
-                                                                        className="focus:outline-none transition-transform hover:scale-110"
-                                                                    >
-                                                                        <Star
-                                                                            className={`w-5 h-5 ${star <= (activity.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300 hover:text-yellow-300'}`}
-                                                                        />
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Reorder.Item>
-                                    );
-                                })}
-                            </Reorder.Group>
-                        )}
-                    </div>
-
-                    {/* Sidebar - Map & Recommendations */}
-                    <div className="lg:col-span-1 space-y-6 sticky top-24 h-fit">
-                        {/* Map Widget */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden h-64 z-0">
-                            <Map activities={allActivities} destination={trip.destination} />
-                        </div>
-
-                        {/* Hidden Gems */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                <Sun className="w-5 h-5 text-yellow-500" />
-                                Hidden Gems
-                            </h3>
-                            <p className="text-sm text-slate-500 mb-4">
-                                Unique spots in <strong>{trip.destination}</strong> you shouldn't miss.
-                            </p>
-
-                            <div className="space-y-3">
-                                {isLoadingGems ? (
-                                    <div className="flex justify-center py-4">
-                                        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                        {/* 1. ITINERARY TAB */}
+                        <div className={`transition-opacity duration-300 ${activeTab === 'itinerary' ? 'block' : 'hidden'}`}>
+                            {/* Trip Header */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+                                <div>
+                                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">{trip.title}</h1>
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1 bg-card px-3 py-1 rounded-full border border-border shadow-sm"><MapPin className="w-3 h-3" /> {trip.destination}</span>
+                                        <span className="flex items-center gap-1 bg-card px-3 py-1 rounded-full border border-border shadow-sm"><Calendar className="w-3 h-3" /> {new Date(trip.start_date || trip.startDate).toLocaleDateString()}</span>
+                                        <span className="flex items-center gap-1 bg-card px-3 py-1 rounded-full border border-border shadow-sm font-medium text-foreground">
+                                            {trip.currency === 'INR' ? '₹' : trip.currency === 'EUR' ? '€' : trip.currency === 'GBP' ? '£' : trip.currency === 'JPY' ? '¥' : '$'}
+                                            {trip.budget}
+                                        </span>
                                     </div>
-                                ) : hiddenGems.length > 0 ? (
-                                    hiddenGems.map((gem, i) => (
-                                        <div key={i} className="group relative bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors border border-transparent hover:border-primary-200">
-                                            <div className="flex justify-between items-start">
-                                                <h4 className="font-medium text-slate-800 dark:text-slate-200 text-sm">{gem.title}</h4>
-                                                <button
-                                                    onClick={() => handleAddGem(gem)}
-                                                    className="p-1 rounded-full bg-white dark:bg-slate-600 text-primary-600 hover:scale-110 transition-transform shadow-sm"
-                                                    title="Add to Itinerary"
-                                                >
-                                                    <Plus className="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{gem.description}</p>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-slate-400 text-center italic">No gems found yet.</p>
-                                )}
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button variant="outline" onClick={handleShare} className="gap-2">
+                                        <Share2 className="w-4 h-4" /> Share
+                                    </Button>
+                                    <Button onClick={handleSave} className="gap-2">
+                                        <Save className="w-4 h-4" /> Save Trip
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Day Selector */}
+                            <div className="flex gap-2 overflow-x-auto mb-8 pb-2 no-scrollbar">
+                                {trip.days.map((day) => (
+                                    <button
+                                        key={day.id}
+                                        onClick={() => setSelectedDay(day.id)}
+                                        className={`flex-shrink-0 px-5 py-2.5 rounded-xl font-medium transition-all relative ${selectedDay === day.id ? 'text-primary-foreground' : 'bg-card text-muted-foreground border border-border hover:bg-muted'
+                                            }`}
+                                    >
+                                        {selectedDay === day.id && (
+                                            <motion.div
+                                                layoutId="activeDay"
+                                                className="absolute inset-0 bg-primary rounded-xl"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
+                                        <span className="relative z-10">Day {day.dayNumber}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Itinerary List */}
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-2xl font-bold text-foreground">Day {activeDay?.dayNumber} Plan</h2>
+                                        <Button size="sm" onClick={() => setIsAddingActivity(true)} className="gap-2">
+                                            <Plus className="w-4 h-4" /> Add Activity
+                                        </Button>
+                                    </div>
+
+                                    {/* Activities List */}
+                                    {activeDay?.activities.length === 0 ? (
+                                        <Card className="text-center py-16 border-dashed">
+                                            <CardContent>
+                                                <Sparkles className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                                                <p className="text-muted-foreground mb-6 text-lg">No activities yet.</p>
+                                                <div className="flex gap-3 justify-center">
+                                                    <Button onClick={handleGenerateItinerary} disabled={isGenerating} className="gap-2">
+                                                        {isGenerating ? <Loader2 className="animate-spin w-5 h-5" /> : <Sparkles className="w-5 h-5" />} Auto-Generate Itinerary
+                                                    </Button>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground/60 mt-4">AI will plan full schedule based on budget</p>
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <Reorder.Group axis="y" values={activeDay?.activities || []} onReorder={(newOrder) => reorderActivities(trip.id, activeDay.id, newOrder)} className="space-y-4">
+                                            {activeDay?.activities.map((activity) => {
+                                                const typeInfo = ACTIVITY_TYPES.find(t => t.value === activity.type) || ACTIVITY_TYPES[0];
+                                                const Icon = typeInfo.icon;
+                                                return (
+                                                    <Reorder.Item key={activity.id} value={activity} className="relative">
+                                                        <Card className={`border hover:border-primary/50 transition-colors ${activity.safety_warning ? 'border-l-4 border-l-destructive' : ''}`}>
+                                                            <div className="p-5 flex items-start gap-4">
+                                                                <div className="mt-2 text-muted-foreground/50 cursor-grab hover:text-foreground"><GripVertical className="w-5 h-5" /></div>
+                                                                <button onClick={() => toggleActivityComplete(trip.id, activeDay.id, activity.id)} className={activity.isCompleted ? 'text-green-500 mt-2' : 'text-muted-foreground/50 mt-2 hover:text-muted-foreground transition-colors'}>
+                                                                    {activity.isCompleted ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                                                                </button>
+                                                                <div className={`p-3 rounded-xl ${typeInfo.color}`}><Icon className="w-5 h-5" /></div>
+                                                                <div className="flex-grow">
+                                                                    <div className="flex justify-between items-center mb-1">
+                                                                        <h3 className={`font-semibold text-lg ${activity.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{activity.title}</h3>
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={() => deleteActivity(trip.id, activeDay.id, activity.id)} className="p-2 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                                        </div>
+                                                                    </div>
+                                                                    {activity.safety_warning && <p className="text-xs font-medium text-destructive bg-destructive/10 p-2.5 rounded-lg mb-3 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {activity.safety_warning}</p>}
+                                                                    <div className="flex gap-4 text-sm text-muted-foreground">
+                                                                        <span className="flex gap-1 items-center bg-muted px-2 py-1 rounded text-xs"><Clock className="w-3 h-3" /> {activity.time}</span>
+                                                                        {activity.location && <span className="flex gap-1 items-center"><MapPin className="w-3 h-3" /> {activity.location}</span>}
+                                                                        <span className="px-2 py-1 rounded bg-muted text-xs font-medium uppercase">{typeInfo.label}</span>
+                                                                    </div>
+                                                                    {activity.notes && <p className="mt-3 text-sm text-muted-foreground bg-muted/50 p-3 rounded-xl">{activity.notes}</p>}
+                                                                </div>
+                                                            </div>
+                                                        </Card>
+                                                    </Reorder.Item>
+                                                );
+                                            })}
+                                        </Reorder.Group>
+                                    )}
+                                </div>
+
+                                {/* Sidebar */}
+                                <div className="lg:col-span-1">
+                                    <div className="sticky top-6 space-y-6">
+                                        <Card className="rounded-3xl overflow-hidden h-64 border-border">
+                                            <Map activities={allActivities} destination={trip.destination} />
+                                        </Card>
+
+                                        {/* Scrollable Hidden Gems */}
+                                        <Card className="rounded-3xl border-border flex flex-col max-h-[calc(100vh-25rem)]">
+                                            <CardHeader>
+                                                <CardTitle className="flex items-center gap-2 text-lg">
+                                                    <Sun className="w-5 h-5 text-yellow-500" /> Hidden Gems
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+                                                {hiddenGems.map((gem, i) => (
+                                                    <div key={i} className="flex justify-between items-start p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors shrink-0">
+                                                        <div>
+                                                            <h4 className="text-sm font-medium text-foreground">{gem.title}</h4>
+                                                            <p className="text-xs text-muted-foreground line-clamp-2">{gem.description}</p>
+                                                        </div>
+                                                        <button onClick={() => handleAddGem(gem)} className="text-primary hover:scale-110 transition-transform p-1">
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        {/* 2. BUDGET TAB */}
+                        <div className={`transition-opacity duration-300 ${activeTab === 'budget' ? 'block' : 'hidden'}`}>
+                            <div className="max-w-4xl mx-auto">
+                                <Card className="rounded-3xl overflow-hidden border-border">
+                                    <div className="p-8 border-b border-border bg-muted/30">
+                                        <h2 className="text-3xl font-bold text-foreground mb-2">Trip Budget Planner</h2>
+                                        <p className="text-muted-foreground">Plan, track, and optimize your expenses for {trip.destination}.</p>
+                                    </div>
+
+                                    <CardContent className="p-8">
+                                        {/* Inputs */}
+                                        <div className="flex flex-col md:flex-row gap-6 mb-8 items-end">
+                                            <div className="flex-grow">
+                                                <label className="block text-sm font-medium text-foreground mb-2">Total Budget (Per Person)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">{currencyInput}</span>
+                                                    <input
+                                                        type="number"
+                                                        value={budgetInput}
+                                                        onChange={e => setBudgetInput(e.target.value)}
+                                                        className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-14 text-lg ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        placeholder="2000"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="w-full md:w-40">
+                                                <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
+                                                <select value={currencyInput} onChange={e => setCurrencyInput(e.target.value)} className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                                    {['USD', 'EUR', 'GBP', 'INR', 'AUD', 'JPY'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                            <Button onClick={handleAnalyzeBudget} disabled={isAnalyzing || !budgetInput} className="h-12 px-8">
+                                                {isAnalyzing ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />} Analyze
+                                            </Button>
+                                            <Button variant="outline" onClick={handleSaveBudget} className="h-12 px-6">Save</Button>
+                                        </div>
+
+                                        {/* Report */}
+                                        {analysisReport ? (
+                                            <div className="bg-muted/30 rounded-2xl border border-border p-8">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                                                    h1: ({ node, ...props }) => <h3 className="text-xl font-bold text-primary mb-4 pb-2 border-b border-border" {...props} />,
+                                                    h2: ({ node, ...props }) => <h4 className="text-lg font-semibold text-foreground mt-6 mb-3" {...props} />,
+                                                    h3: ({ node, ...props }) => <h4 className="text-md font-semibold text-foreground/80 mt-4 mb-2" {...props} />,
+                                                    ul: ({ node, ...props }) => <ul className="space-y-2 mb-4 list-none pl-0" {...props} />,
+                                                    li: ({ node, ...props }) => <li className="flex items-start gap-2 text-muted-foreground text-sm" {...props}><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" /><span className="flex-1">{props.children}</span></li>,
+                                                    strong: ({ node, ...props }) => <strong className="font-semibold text-foreground" {...props} />
+                                                }}>
+                                                    {analysisReport}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-12 text-muted-foreground">
+                                                <p>Enter your budget above and click "Analyze" to see the breakdown.</p>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
-            {/* Add Activity Modal */}
+            {/* Modal for adding activity */}
             <AnimatePresence>
                 {isAddingActivity && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsAddingActivity(false)}
-                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg p-8"
-                        >
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Add Activity</h2>
-
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsAddingActivity(false)} />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative bg-card border border-border rounded-3xl p-6 w-full max-w-lg z-10 shadow-2xl">
+                            <h2 className="text-2xl font-bold mb-4 text-foreground">Add Activity</h2>
                             <form onSubmit={handleAddActivity} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Activity Name</label>
-                                    <input
-                                        type="text"
-                                        autoFocus
-                                        required
-                                        placeholder="e.g. Visit Louvre Museum"
-                                        className="input"
-                                        value={newActivity.title}
-                                        onChange={e => setNewActivity({ ...newActivity, title: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
-                                        <input
-                                            type="time"
-                                            required
-                                            className="input"
-                                            value={newActivity.time}
-                                            onChange={e => setNewActivity({ ...newActivity, time: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
-                                        <select
-                                            className="input"
-                                            value={newActivity.type}
-                                            onChange={e => setNewActivity({ ...newActivity, type: e.target.value })}
-                                        >
-                                            {ACTIVITY_TYPES.map(type => (
-                                                <option key={type.value} value={type.value}>{type.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location (Optional)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Rue de Rivoli, Paris"
-                                        className="input"
-                                        value={newActivity.location}
-                                        onChange={e => setNewActivity({ ...newActivity, location: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes (Optional)</label>
-                                    <textarea
-                                        rows="3"
-                                        className="input"
-                                        placeholder="Ticket price, dress code, etc."
-                                        value={newActivity.notes}
-                                        onChange={e => setNewActivity({ ...newActivity, notes: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="flex gap-3 mt-8">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsAddingActivity(false)}
-                                        className="flex-1 btn bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="flex-1 btn btn-primary"
-                                    >
-                                        Add Activity
-                                    </button>
+                                <input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Title" value={newActivity.title} onChange={e => setNewActivity({ ...newActivity, title: e.target.value })} autoFocus required />
+                                <input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="time" value={newActivity.time} onChange={e => setNewActivity({ ...newActivity, time: e.target.value })} />
+                                <div className="flex gap-2">
+                                    <Button type="button" variant="ghost" onClick={() => setIsAddingActivity(false)} className="flex-1">Cancel</Button>
+                                    <Button type="submit" className="flex-1">Add</Button>
                                 </div>
                             </form>
                         </motion.div>

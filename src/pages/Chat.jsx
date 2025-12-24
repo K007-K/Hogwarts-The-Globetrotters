@@ -1,188 +1,214 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Trash2, Globe, Map, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, memo } from 'react';
+import useChatStore from '../store/chatStore';
+import { Send, Sparkles, User, Trash2, MapPin, Compass, Lightbulb, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import useChatStore from '../store/chatStore';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Memoized Message Component to prevent unnecessary re-renders
+const MessageBubble = memo(({ message }) => {
+    const isAi = message.role === 'assistant';
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`flex gap-4 ${isAi ? 'justify-start' : 'justify-end'}`}
+        >
+            {/* AI Avatar */}
+            {isAi && (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md mt-1">
+                    <Sparkles className="w-4 h-4 text-white" />
+                </div>
+            )}
+
+            {/* Message Bubble */}
+            <div
+                className={`max-w-[85%] rounded-2xl p-4 shadow-sm text-[15px] leading-relaxed relative ${isAi
+                    ? 'bg-white/80 backdrop-blur-md text-slate-800 border border-white/40 rounded-tl-none'
+                    : 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-tr-none shadow-blue-500/20'
+                    }`}
+            >
+                <div className={`prose prose-sm max-w-none break-words ${isAi ? 'prose-slate' : 'prose-invert'}`}>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                </div>
+
+                <span className={`text-[10px] absolute bottom-1 ${isAi ? 'right-3 text-slate-400' : 'left-3 text-blue-100/70'}`}>
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()}
+                </span>
+            </div>
+
+            {/* User Avatar */}
+            {!isAi && (
+                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-1">
+                    <User className="w-4 h-4 text-slate-500" />
+                </div>
+            )}
+        </motion.div>
+    );
+});
+
+const SuggestionChip = ({ icon, label, onClick }) => (
+    <button
+        onClick={onClick}
+        className="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm border border-slate-200/50 hover:border-blue-300 hover:bg-blue-50/50 rounded-full text-sm text-slate-600 transition-all cursor-pointer whitespace-nowrap shadow-sm hover:shadow-md"
+    >
+        {icon}
+        {label}
+    </button>
+);
 
 const Chat = () => {
     const { messages, isLoading, sendMessage, clearChat } = useChatStore();
     const [input, setInput] = useState('');
     const chatContainerRef = useRef(null);
-    const inputRef = useRef(null);
+    const textareaRef = useRef(null);
 
-    const scrollToBottom = () => {
+    // Auto-scroll to bottom
+    useEffect(() => {
         if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            chatContainerRef.current.scrollTo({
+                top: chatContainerRef.current.scrollHeight,
+                behavior: 'smooth',
+            });
         }
-    };
+    }, [messages, isLoading]);
 
+    // Auto-resize textarea
     useEffect(() => {
-        if (messages.length > 0) {
-            scrollToBottom();
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
         }
-    }, [messages]);
+    }, [input]);
 
-    useEffect(() => {
-        // Focus input on mount
-        inputRef.current?.focus();
-    }, []);
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
 
-        sendMessage(input);
+        const userMessage = input.trim();
         setInput('');
+
+        // Reset height
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+        await sendMessage(userMessage);
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
+        }
+    };
+
+    // Suggestions for empty state
     const suggestions = [
-        "Plan a 5-day trip to Kyoto",
-        "Best street food in Mumbai?",
-        "Hidden gems in Paris",
-        "Budget tips for Bali",
+        { icon: <MapPin className="w-4 h-4 text-emerald-500" />, label: "3 days in Tokyo", prompt: "Plan a 3-day itinerary for Tokyo with a mix of modern and traditional sights." },
+        { icon: <Compass className="w-4 h-4 text-blue-500" />, label: "Bali on a budget", prompt: "I want to visit Bali for a week on a tight budget. What do you recommend?" },
+        { icon: <Lightbulb className="w-4 h-4 text-amber-500" />, label: "Hidden gems in Paris", prompt: "What are some hidden gems in Paris that tourists usually miss?" },
     ];
 
     return (
-        <div className="min-h-screen pt-20 pb-10 bg-slate-50 dark:bg-slate-900">
-            <div className="container-custom h-[calc(100vh-8rem)] flex flex-col max-w-4xl mx-auto">
+        <div className="min-h-screen bg-slate-50 pt-20 flex flex-col items-center">
+            {/* Main Chat Container */}
+            <div className="w-full max-w-3xl flex-1 flex flex-col relative h-[calc(100vh-5rem)]">
 
-                {/* Chat Header */}
-                <div className="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800 mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg">
-                            <Bot className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Travel Assistant</h1>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                Online & Ready to help
-                            </p>
-                        </div>
+                {/* Header (Minimal) */}
+                <div className="absolute top-0 left-0 right-0 z-10 px-6 py-4 flex items-center justify-between bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="text-xs font-semibold text-slate-500 tracking-wide uppercase">Travel Assistant Online</span>
                     </div>
-
-                    <button
-                        onClick={clearChat}
-                        className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Clear Chat"
-                    >
-                        <Trash2 className="w-5 h-5" />
-                    </button>
+                    {(messages.length > 0) && (
+                        <button
+                            onClick={() => {
+                                clearChat();
+                                // Manual force reset in local component state if needed, though store handles it
+                                setInput('');
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
+                            title="Reset Chat"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Messages Area */}
                 <div
                     ref={chatContainerRef}
-                    className="flex-grow overflow-y-auto px-4 py-2 space-y-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700"
+                    className="flex-1 overflow-y-auto px-6 pt-16 pb-32 space-y-6 scrollbar-none"
                 >
                     <AnimatePresence initial={false}>
                         {messages.map((msg) => (
-                            <motion.div
-                                key={msg.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                            >
-                                {/* Avatar */}
-                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-md ${msg.role === 'user'
-                                    ? 'bg-slate-200 dark:bg-slate-700'
-                                    : 'bg-gradient-to-br from-primary-500 to-primary-600'
-                                    }`}>
-                                    {msg.role === 'user' ? (
-                                        <User className="w-6 h-6 text-slate-600 dark:text-slate-300" />
-                                    ) : (
-                                        <Bot className="w-6 h-6 text-white" />
-                                    )}
-                                </div>
-
-                                {/* Message Bubble */}
-                                <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                    <div className={`px-5 py-4 rounded-2xl shadow-sm ${msg.role === 'user'
-                                        ? 'bg-primary-600 text-white rounded-tr-none'
-                                        : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-tl-none'
-                                        }`}>
-                                        <div className={`prose prose-sm max-w-none ${msg.role === 'user'
-                                            ? 'prose-invert'
-                                            : 'dark:prose-invert'
-                                            }`}>
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                {msg.content}
-                                            </ReactMarkdown>
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 mt-1 px-1">
-                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                            </motion.div>
+                            <MessageBubble key={msg.id} message={msg} />
                         ))}
                     </AnimatePresence>
 
+                    {/* Loading Indicator */}
                     {isLoading && (
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex gap-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex gap-4 justify-start"
                         >
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
-                                <Bot className="w-6 h-6 text-white" />
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                                <Sparkles className="w-4 h-4 text-white" />
                             </div>
-                            <div className="bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-2">
-                                <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-                                <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                                <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                            <div className="bg-white/80 backdrop-blur-md px-4 py-3 rounded-2xl rounded-tl-none border border-white/40 shadow-sm flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                                <span className="text-sm text-slate-500 font-medium">Planning your trip...</span>
                             </div>
                         </motion.div>
                     )}
+
+                    {/* Bottom Spacer */}
+                    <div className="h-4" />
                 </div>
 
-                {/* Suggestion Chips */}
-                {messages.length < 3 && (
-                    <div className="flex gap-2 overflow-x-auto pb-4 px-1 no-scrollbar my-2">
-                        {suggestions.map((suggestion, idx) => (
+                {/* Floating Input Area */}
+                <div className="absolute bottom-6 left-0 right-0 px-6">
+                    <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-lg shadow-slate-200/50 rounded-3xl p-2 relative overflow-hidden transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white/90 focus-within:shadow-xl">
+
+                        {/* Suggestion Chips (Only if chat is short) */}
+                        {messages.length <= 1 && !isLoading && (
+                            <div className="absolute bottom-full left-0 right-0 py-4 px-2 flex justify-center gap-2 overflow-x-auto no-scrollbar mask-gradient">
+                                {suggestions.map((s, i) => (
+                                    <SuggestionChip
+                                        key={i}
+                                        icon={s.icon}
+                                        label={s.label}
+                                        onClick={() => setInput(s.prompt)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                            <textarea
+                                ref={textareaRef}
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Where do you want to start?"
+                                className="w-full bg-transparent border-none text-slate-800 placeholder:text-slate-400 resize-none max-h-[120px] py-3 px-4 focus:ring-0 text-[15px] leading-relaxed"
+                                rows={1}
+                            />
                             <button
-                                key={idx}
-                                onClick={() => sendMessage(suggestion)}
-                                className="px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:border-primary-500 hover:text-primary-600 transition-colors whitespace-nowrap shadow-sm"
+                                type="submit"
+                                disabled={!input.trim() || isLoading}
+                                className={`p-3 rounded-2xl flex-shrink-0 transition-all duration-300 ${input.trim() && !isLoading
+                                    ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95'
+                                    : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                    }`}
                             >
-                                {suggestion}
+                                <Send className="w-5 h-5" />
                             </button>
-                        ))}
+                        </form>
                     </div>
-                )}
-
-                {/* Input Area */}
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                    <form onSubmit={handleSubmit} className="relative flex items-end gap-2 p-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg focus-within:ring-2 focus-within:ring-primary-100 dark:focus-within:ring-primary-900/30 transition-all">
-                        <textarea
-                            ref={inputRef}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSubmit(e);
-                                }
-                            }}
-                            placeholder="Ask anything about your trip..."
-                            className="w-full max-h-32 p-3 bg-transparent border-none resize-none focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 scrollbar-thin"
-                            rows="1"
-                        />
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            type="submit"
-                            disabled={!input.trim() || isLoading}
-                            className="p-3 rounded-xl bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:shadow-xl transition-all"
-                        >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                        </motion.button>
-                    </form>
-                    <p className="text-center text-xs text-slate-400 mt-2">
-                        AI can make mistakes. Please verify important travel information.
-                    </p>
                 </div>
+
             </div>
         </div>
     );

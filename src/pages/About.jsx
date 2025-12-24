@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Plane, Users, Globe, Award } from 'lucide-react';
+import { Plane, Users, Globe, Award, MapPin, Wallet, Sparkles } from 'lucide-react';
 
 const About = () => {
     return (
@@ -64,6 +64,54 @@ const About = () => {
                         <h3 className="text-xl font-bold mb-4">Sustainable Travel</h3>
                         <p className="text-slate-600 dark:text-slate-400">
                             We promote responsible tourism by highlighting eco-friendly accommodations and activities.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.4 }}
+                        className="card text-center p-8"
+                    >
+                        <div className="w-16 h-16 mx-auto bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-6">
+                            <MapPin className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-4">Hidden Gems</h3>
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Go beyond the tourist traps with recommendations for local favorites and secret spots.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 }}
+                        className="card text-center p-8"
+                    >
+                        <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
+                            <Wallet className="w-8 h-8 text-green-600 dark:text-green-400" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-4">Budget Control</h3>
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Real-time expense tracking and budget alerts ensure you enjoy your trip without breaking the bank.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.6 }}
+                        className="card text-center p-8"
+                    >
+                        <div className="w-16 h-16 mx-auto bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-6">
+                            <Sparkles className="w-8 h-8 text-pink-600 dark:text-pink-400" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-4">24/7 AI Support</h3>
+                        <p className="text-slate-600 dark:text-slate-400">
+                            Our intelligent assistant is always available to help with translations, directions, and changes.
                         </p>
                     </motion.div>
                 </div>

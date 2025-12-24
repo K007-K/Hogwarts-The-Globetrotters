@@ -14,22 +14,6 @@ export const LogoLoop = ({
     const [start, setStart] = useState(false);
 
     useEffect(() => {
-        if (!containerRef.current || !scrollerRef.current) return;
-
-        // Clean up previous clones if re-running
-        const scrollerContent = Array.from(scrollerRef.current.children);
-        // Only potential issue with strict mode is double duplication,
-        // but let's check if we already duplicated.
-        // A simple heuristic: if child count > initial items length.
-
-        if (scrollerRef.current.children.length === items.length) {
-            scrollerContent.forEach((item) => {
-                const duplicatedItem = item.cloneNode(true);
-                duplicatedItem.setAttribute('aria-hidden', 'true'); // Accessibility
-                scrollerRef.current.appendChild(duplicatedItem);
-            });
-        }
-
         getDirection();
         getSpeed();
         setStart(true);
@@ -47,33 +31,36 @@ export const LogoLoop = ({
 
     const getSpeed = () => {
         if (containerRef.current) {
-            // Calculate duration based on speed (pixels per second) is tricky with CSS only
-            // simpler to stick to duration classes or style
-            // For now, let's use a standard duration and adjust logic if needed,
-            // or set raw duration style
-            const duration = speed ? `${10000 / speed}s` : "20s"; // Rough mapping
-            containerRef.current.style.setProperty("--animation-duration", "40s");
+            const duration = speed ? `${10000 / speed}s` : "40s";
+            containerRef.current.style.setProperty("--animation-duration", duration);
         }
     };
-
-
-    // Combined into main effect for better sync and dependency management
-
 
     return (
         <div
             ref={containerRef}
-            className={`scroller relative z-20 max-w-7xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)] ${className}`}
+            className={`scroller relative z-20 w-full overflow-hidden ${className}`}
         >
             <ul
                 ref={scrollerRef}
-                className={`flex min-w-full shrink-0 gap-4 py-4 w-max flex-nowrap ${start && "animate-scroll"
+                className={`flex min-w-full shrink-0 gap-4 py-12 w-max flex-nowrap ${start && "animate-scroll"
                     } ${pauseOnHover && "hover:[animation-play-state:paused]"} ${itemClassName}`}
             >
+                {/* Original Items */}
                 {items.map((item, idx) => (
                     <li
-                        key={idx}
-                        className="w-[350px] max-w-full relative flex-shrink-0 px-8 py-6 md:w-[450px]"
+                        key={`original-${idx}`}
+                        className="w-max relative flex-shrink-0"
+                    >
+                        {item}
+                    </li>
+                ))}
+                {/* Duplicated Items for Loop */}
+                {items.map((item, idx) => (
+                    <li
+                        key={`duplicate-${idx}`}
+                        className="w-max relative flex-shrink-0"
+                        aria-hidden="true"
                     >
                         {item}
                     </li>

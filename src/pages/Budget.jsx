@@ -80,9 +80,9 @@ const Budget = () => {
     }
 
     return (
-        <div className="min-h-screen pt-20 pb-12 bg-slate-50 dark:bg-slate-900">
-            <div className="container-custom">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+        <div className="min-h-screen pt-24 pb-16 bg-slate-50 dark:bg-slate-900">
+            <div className="container-custom max-w-7xl mx-auto px-6 md:px-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-slate-900 dark:text-slate-100 mb-2">
                             Budget Manager
@@ -120,7 +120,7 @@ const Budget = () => {
                 </div>
 
                 {/* Dashboard Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white/20 rounded-lg"><Wallet className="w-5 h-5" /></div>
@@ -154,7 +154,7 @@ const Budget = () => {
                     </motion.div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 mt-4">
                     {/* Charts Section */}
                     <div className="lg:col-span-1 space-y-6">
                         <div className="card">

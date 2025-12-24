@@ -162,7 +162,7 @@ const Bookings = () => {
     return (
         <div className="min-h-screen pt-20 pb-12 bg-slate-50 dark:bg-slate-900 transition-colors">
             {/* Hero Section */}
-            <div className="bg-primary-600 pb-32 pt-10 px-4 relative">
+            <div className="bg-primary-600 pb-32 pt-12 px-6 md:px-8 relative">
                 {/* Header Actions */}
                 <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
                     <button
@@ -189,7 +189,7 @@ const Bookings = () => {
                     </select>
                 </div>
 
-                <div className="container-custom text-center text-white">
+                <div className="container-custom max-w-7xl mx-auto text-center text-white">
                     <h1 className="text-4xl font-display font-bold mb-4">Book Your Journey</h1>
                     <p className="text-primary-100 text-lg max-w-2xl mx-auto">
                         Seamless bookings for flights, hotels, and trains. Best prices guaranteed in {currency.code}.
@@ -197,7 +197,7 @@ const Bookings = () => {
                 </div>
             </div>
 
-            <div className="container-custom -mt-24 relative z-10 px-4">
+            <div className="container-custom max-w-7xl mx-auto -mt-24 relative z-10 px-6 md:px-8">
                 {/* Search Card */}
                 <motion.div
                     initial={{ y: 20, opacity: 0 }}
@@ -224,9 +224,9 @@ const Bookings = () => {
                     </div>
 
                     {/* Form */}
-                    <div className="p-8">
+                    <div className="p-8 md:p-12">
                         <form onSubmit={handleSearch} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                                 {activeTab === 'flights' && (
                                     <>
                                         <div className="lg:col-span-1">
@@ -380,7 +380,7 @@ const Bookings = () => {
             </div>
 
             {/* Results Section */}
-            <div className="container-custom px-4">
+            <div className="container-custom max-w-7xl mx-auto px-6 md:px-8 mt-16">
                 <AnimatePresence>
                     {searchState === 'results' && (
                         <motion.div

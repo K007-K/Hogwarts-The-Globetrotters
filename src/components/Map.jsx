@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Utensils, Bed, Camera, Tent, Landmark, Music, ShoppingBag, MapPin } from 'lucide-react';
+import { Utensils, Bed, Camera, Tent, Landmark, Music, ShoppingBag, MapPin, Coffee, Sun } from 'lucide-react';
 
 // Component to recenter map when coordinates change
 const ChangeView = ({ center, zoom }) => {
@@ -35,6 +35,10 @@ const getMarkerIcon = (type) => {
         IconComponent = Tent; // or Trees if available, but Tent is reliable for outdoors
         colorClass = 'bg-green-500';
         ringClass = 'ring-green-200';
+    } else if (t.includes('relax') || t.includes('coffee')) {
+        IconComponent = Coffee;
+        colorClass = 'bg-emerald-500';
+        ringClass = 'ring-emerald-200';
     } else if (t.includes('museum') || t.includes('culture') || t.includes('history')) {
         IconComponent = Landmark;
         colorClass = 'bg-purple-500';
@@ -51,6 +55,10 @@ const getMarkerIcon = (type) => {
         IconComponent = Camera;
         colorClass = 'bg-red-500';
         ringClass = 'ring-red-200';
+    } else if (t.includes('activity')) {
+        IconComponent = Sun;
+        colorClass = 'bg-yellow-500';
+        ringClass = 'ring-yellow-200';
     }
 
     const iconHtml = renderToStaticMarkup(
@@ -164,7 +172,8 @@ const Map = ({ activities = [], destination }) => {
                             id: activity.id,
                             title: activity.title,
                             position: [lat, lon],
-                            type: activity.type
+                            type: activity.type,
+                            safety_warning: activity.safety_warning
                         });
 
                         boundsLat.push(lat);
@@ -206,9 +215,16 @@ const Map = ({ activities = [], destination }) => {
                         <Popup className="custom-popup">
                             <div className="p-1">
                                 <div className="font-bold text-sm text-slate-800 mb-1">{marker.title}</div>
-                                <div className="text-xs text-slate-500 capitalize bg-slate-100 px-2 py-0.5 rounded-full inline-block">
-                                    {marker.type || 'Activity'}
+                                <div className="flex gap-2 items-center mb-1">
+                                    <div className="text-xs text-slate-500 capitalize bg-slate-100 px-2 py-0.5 rounded-full inline-block">
+                                        {marker.type || 'Activity'}
+                                    </div>
                                 </div>
+                                {marker.safety_warning && (
+                                    <div className="text-xs text-red-600 bg-red-50 p-1.5 rounded border border-red-100 mt-1">
+                                        ⚠️ {marker.safety_warning}
+                                    </div>
+                                )}
                             </div>
                         </Popup>
                     </Marker>

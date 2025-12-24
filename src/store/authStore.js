@@ -31,10 +31,13 @@ const useAuthStore = create((set, get) => ({
             const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log(`AuthStore: Auth event ${event}`, session?.user?.email);
 
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                     if (session?.user) {
                         await get().fetchProfile(session.user.id);
                         set({ user: session.user, isAuthenticated: true, isLoading: false });
+                    } else {
+                        // INITIAL_SESSION with no user = not logged in
+                        set({ user: null, profile: null, isAuthenticated: false, isLoading: false });
                     }
                 } else if (event === 'SIGNED_OUT') {
                     set({ user: null, profile: null, isAuthenticated: false, isLoading: false });

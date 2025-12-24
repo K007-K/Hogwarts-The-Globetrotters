@@ -1,0 +1,97 @@
+{
+    "servers": {
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "@mcp/sequential-thinking"
+            ]
+        },
+        "planner": {
+            "command": "npx",
+            "args": [
+                "@mcp/planner"
+            ]
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "@mcp/memory"
+            ]
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "@mcp/filesystem"
+            ],
+            "env": {
+                "ROOT_DIR": "./"
+            }
+        },
+        "shell": {
+            "command": "npx",
+            "args": [
+                "@mcp/shell"
+            ]
+        },
+        "http": {
+            "command": "npx",
+            "args": [
+                "@mcp/http"
+            ]
+        },
+        "git": {
+            "command": "npx",
+            "args": [
+                "@mcp/git"
+            ]
+        },
+        "docs": {
+            "command": "npx",
+            "args": [
+                "@mcp/docs"
+            ]
+        },
+        "ux-reasoning": {
+            "command": "npx",
+            "args": [
+                "@mcp/ux-reasoning"
+            ]
+        },
+        "design-system": {
+            "command": "npx",
+            "args": [
+                "@mcp/design-system"
+            ]
+        },
+        "accessibility": {
+            "command": "npx",
+            "args": [
+                "@mcp/accessibility"
+            ]
+        },
+        "wireframe": {
+            "command": "npx",
+            "args": [
+                "@mcp/wireframe"
+            ]
+        },
+        "component-generator": {
+            "command": "npx",
+            "args": [
+                "@mcp/component-generator"
+            ]
+        },
+        "ui-audit": {
+            "command": "npx",
+            "args": [
+                "@mcp/ui-audit"
+            ]
+        },
+        "figma": {
+            "command": "npx",
+            "args": [
+                "@mcp/figma"
+            ]
+        }
+    }
+}

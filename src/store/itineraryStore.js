@@ -169,6 +169,29 @@ const useItineraryStore = create((set, get) => ({
         }
     },
 
+    updateTrip: async (tripId, updates) => {
+        set({ isLoading: true, error: null });
+        try {
+            const { error } = await supabase
+                .from('trips')
+                .update(updates)
+                .eq('id', tripId);
+
+            if (error) throw error;
+
+            set((state) => ({
+                trips: state.trips.map(t =>
+                    t.id === tripId ? { ...t, ...updates } : t
+                ),
+                currentTrip: state.currentTrip?.id === tripId ? { ...state.currentTrip, ...updates } : state.currentTrip,
+                isLoading: false
+            }));
+        } catch (error) {
+            console.error('Error updating trip:', error);
+            set({ error: error.message, isLoading: false });
+        }
+    },
+
     addActivity: async (tripId, dayId, activity) => {
         const store = get();
         const trip = store.trips.find(t => t.id === tripId);

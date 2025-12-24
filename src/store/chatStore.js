@@ -60,6 +60,13 @@ const useChatStore = create(
         }),
         {
             name: 'travel-chat-storage',
+            partialize: (state) => ({ messages: state.messages }), // Only persist messages
+            merge: (persistedState, currentState) => ({
+                ...currentState,
+                ...persistedState,
+                isLoading: false, // FORCE reset loading state on reload
+                error: null,      // FORCE reset error state on reload
+            }),
         }
     )
 );

@@ -74,8 +74,13 @@ const Footer = () => {
                     ))}
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-slate-600 dark:text-slate-400">
-                    <p>&copy; {currentYear} TravelAI. All rights reserved.</p>
+                <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center">
+                    <div className="max-w-2xl mx-auto mb-8 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                            <strong>AI Disclaimer:</strong> Roameo uses artificial intelligence to generate recommendations. While we strive for accuracy, errors can occur. Please verify critical details like visa requirements and health advisories with official sources.
+                        </p>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-400">&copy; {currentYear} TravelAI. All rights reserved.</p>
                 </div>
             </div>
         </footer>

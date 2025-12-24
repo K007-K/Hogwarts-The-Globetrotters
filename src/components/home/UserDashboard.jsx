@@ -1,174 +1,188 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Map, Calendar, Wallet, Globe, ArrowRight, Star, Heart } from 'lucide-react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import {
+    Sparkles,
+    Map,
+    CreditCard,
+    Wallet,
+    Globe,
+    Sun,
+    Plus,
+    ArrowRight,
+    Plane
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import useAuthStore from '../../store/authStore';
-import BudgetSelectionModal from '../ui/BudgetSelectionModal';
+import { Button } from '../ui/button';
+import Navbar from '../ui/Navbar';
 
 const UserDashboard = () => {
-    const { user } = useAuthStore();
-    const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
-    const [selectedDestination, setSelectedDestination] = useState(null);
+    const { user, profile } = useAuthStore();
 
+    // Fallback for display name
+    const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Traveler';
+
+    // Animation Variants
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.1 }
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.1
+            }
         }
     };
 
     const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: { y: 0, opacity: 1 }
-    };
-
-    const exploreDestinations = [
-        {
-            name: "Paris, France",
-            image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=600&fit=crop",
-            tag: "Art & Romance"
-        },
-        {
-            name: "Tokyo, Japan",
-            image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop",
-            tag: "Future City"
-        },
-        {
-            name: "Bali, Indonesia",
-            image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=600&fit=crop",
-            tag: "Tropical Paradise"
-        }
-    ];
-
-    const handleExploreClick = (dest) => {
-        setSelectedDestination(dest);
-        setIsBudgetModalOpen(true);
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-12 bg-slate-50 dark:bg-slate-900">
-            <div className="container-custom">
-                {/* Welcome Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-12"
-                >
-                    <h1 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-slate-100 mb-2">
-                        Welcome back, <span className="gradient-text">{user?.name}</span>!
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-400">
-                        Ready for your next adventure?
-                    </p>
-                </motion.div>
+        <div className="min-h-screen bg-slate-50/50 font-sans selection:bg-blue-100">
+            <Navbar />
 
-                {/* Quick Actions Grid */}
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
-                >
-                    {/* Plan New Trip */}
-                    <motion.div variants={itemVariants}>
-                        <Link to="/chat" className="card hover:shadow-lg transition-all group h-full block">
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Plus className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Plan New Trip</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                Start a chat with the AI assistant to create a personalized itinerary.
-                            </p>
-                            <div className="mt-4 flex items-center text-blue-600 dark:text-blue-400 font-medium text-sm">
-                                Start Planning <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
+            <main className="pt-28 pb-20 px-6">
+                <div className="max-w-7xl mx-auto">
+                    {/* Greeting Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="mb-10"
+                    >
+                        <h1 className="text-3xl sm:text-4xl font-display font-bold text-slate-900 tracking-tight mb-2">
+                            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-500">{displayName}</span>!
+                        </h1>
+                        <p className="text-slate-500 text-lg">
+                            Ready for your next adventure?
+                        </p>
                     </motion.div>
 
-                    {/* View Itineraries */}
-                    <motion.div variants={itemVariants}>
-                        <Link to="/itinerary" className="card hover:shadow-lg transition-all group h-full block">
-                            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Map className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">My Trips</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                Access and manage your saved trips and itineraries.
-                            </p>
-                            <div className="mt-4 flex items-center text-purple-600 dark:text-purple-400 font-medium text-sm">
-                                View Trips <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
-                    </motion.div>
-
-                    {/* Manage Budget */}
-                    <motion.div variants={itemVariants}>
-                        <Link to="/budget" className="card hover:shadow-lg transition-all group h-full block">
-                            <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Wallet className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Expense Tracker</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm">
-                                Monitor your travel spending and stay within budget.
-                            </p>
-                            <div className="mt-4 flex items-center text-emerald-600 dark:text-emerald-400 font-medium text-sm">
-                                Manage Budget <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
-                    </motion.div>
-                </motion.div>
-
-                {/* Explore Section */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                >
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Explore More</h2>
-                        <Link to="/discover" className="text-primary-600 hover:text-primary-700 font-medium text-sm">
-                            View All Destinations
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {exploreDestinations.map((dest, index) => (
-                            <motion.div
-                                key={index}
-                                whileHover={{ y: -5 }}
-                                onClick={() => handleExploreClick(dest)}
-                                className="group relative overflow-hidden rounded-2xl aspect-video cursor-pointer shadow-md hover:shadow-xl transition-all"
-                            >
-                                <img
-                                    src={dest.image}
-                                    alt={dest.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                                <div className="absolute bottom-4 left-4 text-white">
-                                    <h3 className="font-bold text-lg">{dest.name}</h3>
-                                    <p className="text-sm opacity-90">{dest.tag}</p>
+                    {/* Dashboard Grid */}
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
+                    >
+                        {/* Card 1: Plan New Trip */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="bg-white rounded-3xl p-8 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 hover:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.1)] transition-shadow duration-300 flex flex-col justify-between group h-full"
+                        >
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-3 rounded-2xl bg-blue-50 text-blue-600">
+                                        <Plus className="w-6 h-6" />
+                                    </div>
                                 </div>
-                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                                        <Plus className="w-3 h-3" /> Plan Trip
-                                    </span>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.div>
-            </div>
+                                <h2 className="text-xl font-bold text-slate-900 mb-2">Plan New Trip</h2>
+                                <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                                    Start a chat with the AI assistant to create a personalized itinerary for your next journey.
+                                </p>
+                            </div>
+                            <Link to="/chat" className="inline-flex items-center text-blue-600 font-semibold text-sm hover:text-blue-700 transition-colors group-hover:translate-x-1 duration-300">
+                                Start Planning <ArrowRight className="w-4 h-4 ml-1.5" />
+                            </Link>
+                        </motion.div>
 
-            {/* Budget Selection Modal */}
-            <BudgetSelectionModal
-                isOpen={isBudgetModalOpen}
-                onClose={() => setIsBudgetModalOpen(false)}
-                destination={selectedDestination}
-            />
+                        {/* Card 2: My Trips */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="bg-white rounded-3xl p-8 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 hover:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.1)] transition-shadow duration-300 flex flex-col justify-between group h-full"
+                        >
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-3 rounded-2xl bg-purple-50 text-purple-600">
+                                        <Map className="w-6 h-6" />
+                                    </div>
+                                </div>
+                                <h2 className="text-xl font-bold text-slate-900 mb-2">My Trips</h2>
+                                <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                                    Access and manage your saved trips and itineraries.
+                                </p>
+                            </div>
+                            <Link to="/trips" className="inline-flex items-center text-purple-600 font-semibold text-sm hover:text-purple-700 transition-colors group-hover:translate-x-1 duration-300">
+                                View Trips <ArrowRight className="w-4 h-4 ml-1.5" />
+                            </Link>
+                        </motion.div>
+
+                        {/* Card 3: Expense Tracker */}
+                        <motion.div
+                            variants={itemVariants}
+                            className="bg-white rounded-3xl p-8 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 hover:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.1)] transition-shadow duration-300 flex flex-col justify-between group h-full"
+                        >
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+                                        <Wallet className="w-6 h-6" />
+                                    </div>
+                                </div>
+                                <h2 className="text-xl font-bold text-slate-900 mb-2">Expense Tracker</h2>
+                                <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                                    Monitor your travel spending and stay within budget.
+                                </p>
+                            </div>
+                            <Link to="/budget" className="inline-flex items-center text-emerald-600 font-semibold text-sm hover:text-emerald-700 transition-colors group-hover:translate-x-1 duration-300">
+                                Manage Budget <ArrowRight className="w-4 h-4 ml-1.5" />
+                            </Link>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Explore Section */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl font-display font-bold text-slate-900">Explore More</h2>
+                            <Link to="/discover" className="text-blue-600 text-sm font-semibold hover:text-blue-700 transition-colors">
+                                View All Destinations
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <ExploreCard
+                                title="Paris, France"
+                                subtitle="Art & Romance"
+                                image="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=800"
+                            />
+                            <ExploreCard
+                                title="Tokyo, Japan"
+                                subtitle="Future City"
+                                image="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=800"
+                            />
+                            <ExploreCard
+                                title="Bali, Indonesia"
+                                subtitle="Tropical Paradise"
+                                image="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800"
+                            />
+                        </div>
+                    </motion.div>
+                </div>
+            </main>
         </div>
     );
 };
+
+// Sub-component for Explore Cards
+const ExploreCard = ({ title, subtitle, image }) => (
+    <div className="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-500">
+        <img
+            src={image}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+        <div className="absolute bottom-0 left-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+            <h3 className="text-white font-bold text-lg mb-1">{title}</h3>
+            <p className="text-white/80 text-sm font-medium">{subtitle}</p>
+        </div>
+    </div>
+);
 
 export default UserDashboard;

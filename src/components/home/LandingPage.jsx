@@ -1,69 +1,10 @@
 import { motion } from 'framer-motion';
 import {
-    Sparkles,
-    MapPin,
-    Globe,
-    Wallet,
-    Languages,
-    Shield,
-    MessageCircle,
-    Calendar,
-    TrendingUp,
-    ArrowRight
+    Sparkles, MapPin, Wallet, MessageCircle, Calendar, ArrowRight, Shield, Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LogoLoop } from '../ui/LogoLoop';
-
-const features = [
-    {
-        icon: MessageCircle,
-        title: 'AI Travel Chatbot',
-        description: 'Get personalized travel advice and recommendations from our intelligent AI assistant.',
-        gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-        icon: Calendar,
-        title: 'Smart Itinerary Builder',
-        description: 'Create perfect day-by-day travel plans with drag-and-drop simplicity.',
-        gradient: 'from-purple-500 to-pink-500',
-    },
-    {
-        icon: MapPin,
-        title: 'Discover Hidden Gems',
-        description: 'Explore local attractions and authentic experiences off the beaten path.',
-        gradient: 'from-orange-500 to-red-500',
-    },
-    {
-        icon: Wallet,
-        title: 'Budget Management',
-        description: 'Track expenses, set budgets, and get cost-effective travel suggestions.',
-        gradient: 'from-green-500 to-emerald-500',
-    },
-    {
-        icon: Languages,
-        title: 'Real-time Translation',
-        description: 'Break language barriers with instant translation and common phrases.',
-        gradient: 'from-indigo-500 to-purple-500',
-    },
-    {
-        icon: Shield,
-        title: 'Safety & Alerts',
-        description: 'Stay informed with travel advisories and emergency information.',
-        gradient: 'from-red-500 to-pink-500',
-    },
-    {
-        icon: Globe,
-        title: 'Cultural Insights',
-        description: 'Learn local customs, etiquette, and cultural tips for any destination.',
-        gradient: 'from-teal-500 to-cyan-500',
-    },
-    {
-        icon: TrendingUp,
-        title: 'Seasonal Recommendations',
-        description: 'Get destination suggestions based on the best time to visit.',
-        gradient: 'from-amber-500 to-orange-500',
-    },
-];
+import { Button } from '../ui/Button';
 
 const LandingPage = () => {
     const destinations = [
@@ -105,214 +46,270 @@ const LandingPage = () => {
         },
     ];
 
+    const features = [
+        {
+            icon: MessageCircle,
+            title: "AI Travel Chatbot",
+            description: "Get personalized travel recommendations and instant answers from our intelligent AI-powered assistant.",
+            color: "text-blue-500",
+            bg: "bg-blue-50"
+        },
+        {
+            icon: Calendar,
+            title: "Smart Itinerary Builder",
+            description: "Create and customize perfect day-by-day travel plans with our intuitive drag-and-drop interface.",
+            color: "text-purple-500",
+            bg: "bg-purple-50"
+        },
+        {
+            icon: MapPin,
+            title: "Discover Hidden Gems",
+            description: "Explore authentic local attractions and experiences that most tourists miss on their journey.",
+            color: "text-orange-500",
+            bg: "bg-orange-50"
+        },
+        {
+            icon: Wallet,
+            title: "Smart Budget Tracking",
+            description: "Monitor your travel expenses in real-time and get accurate cost estimates to stay on budget.",
+            color: "text-green-500",
+            bg: "bg-green-50"
+        },
+        {
+            icon: Shield,
+            title: "Verified Recommendations",
+            description: "Every place, restaurant, and hotel is verified to ensure quality, safety, and authenticity.",
+            color: "text-teal-500",
+            bg: "bg-teal-50"
+        },
+        {
+            icon: Globe,
+            title: "Translation & Communication",
+            description: "Break language barriers with instant translation tools to communicate confidently anywhere.",
+            color: "text-indigo-500",
+            bg: "bg-indigo-50"
+        }
+    ];
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.1 },
-        },
+            transition: {
+                staggerChildren: 0.2,
+                duration: 0.8
+            }
+        }
     };
 
     const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: {
-            y: 0,
-            opacity: 1,
-            transition: { duration: 0.5 },
-        },
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-white overflow-x-hidden">
             {/* Hero Section */}
-            <section className="relative section pt-32 pb-20 overflow-hidden">
-                {/* Animated Background */}
-                <div className="absolute inset-0 -z-10">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-purple-50 to-accent-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                </div>
-
-                <div className="container-custom">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="text-center max-w-4xl mx-auto"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6"
-                        >
-                            <Sparkles className="w-4 h-4 text-primary-600" />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                AI-Powered Travel Planning
-                            </span>
-                        </motion.div>
-
-                        <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 text-balance">
-                            Travel Without{' '}
-                            <span className="gradient-text">Stress</span>
-                        </h1>
-
-                        <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto text-balance">
-                            From planning to exploring, experience seamless travel with AI-powered recommendations,
-                            smart budgeting, and cultural insights—all in one platform.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link to="/signup">
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="btn btn-primary group"
-                                >
-                                    Start Planning
-                                    <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </motion.button>
-                            </Link>
-                            <Link to="/login">
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="btn btn-outline"
-                                >
-                                    Explore Destinations
-                                </motion.button>
-                            </Link>
-                        </div>
+            <section className="relative pt-32 pb-20 flex flex-col items-center text-center px-4 bg-gradient-to-b from-white via-blue-50/20 to-white">
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                    className="max-w-4xl mx-auto z-10"
+                >
+                    <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-blue-100 shadow-sm text-blue-600 text-sm font-medium mb-8 hover:scale-105 transition-transform cursor-default">
+                        <Sparkles className="w-4 h-4" />
+                        <span>AI-Powered Travel Planning</span>
                     </motion.div>
-                </div>
+
+                    <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-display font-bold mb-6 text-slate-900 tracking-tight leading-tight">
+                        Travel Without <span className="text-blue-600 inline-block">Stress</span>
+                    </motion.h1>
+
+                    <motion.p variants={itemVariants} className="text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+                        From planning to exploring, experience seamless travel with AI-powered recommendations, smart budgeting, and cultural insights.
+                    </motion.p>
+
+                    <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link to="/chat">
+                            <Button size="lg" className="text-lg px-8 h-12 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-500/20 rounded-xl transition-all hover:scale-105 hover:-translate-y-0.5 active:scale-95 duration-300">
+                                Start Planning <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
+                        </Link>
+                        <a href="#destinations">
+                            <Button variant="outline" size="lg" className="text-lg px-8 h-12 w-full sm:w-auto border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 rounded-xl transition-all hover:scale-105 duration-300">
+                                Explore Destinations
+                            </Button>
+                        </a>
+                    </motion.div>
+                </motion.div>
+
+                {/* Smooth Gradient Blobs */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.5 }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-400/5 rounded-full blur-[120px] -z-0 pointer-events-none"
+                />
             </section>
 
-            {/* Features Section */}
-            <section className="section bg-white dark:bg-slate-800/50" id="features">
-                <div className="container-custom">
+            {/* Everything You Need Section (Features Loop) */}
+            <section id="features" className="pt-20 pb-12 bg-white relative overflow-hidden">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-10 text-center">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="text-center mb-16"
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.6 }}
                     >
-                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4 text-slate-900">
                             Everything You Need
                         </h2>
-                        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Powerful features designed to make your travel experience effortless and memorable.
+                        <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto">
+                            Powerful features designed to make your travel experience effortless.
                         </p>
                     </motion.div>
+                </div>
 
-                    <div className="relative w-full overflow-hidden">
-                        <LogoLoop
-                            speed={50}
-                            direction="left"
-                            pauseOnHover={false}
-                            items={features.map((feature, index) => (
-                                <div
-                                    key={index}
-                                    className="card h-full min-h-[200px] border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 rounded-2xl flex flex-col items-start gap-4 transition-all duration-300 hover:shadow-xl hover:border-primary-200 dark:hover:border-primary-800"
-                                >
-                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                        <feature.icon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                                            {feature.title}
-                                        </h3>
-                                        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                                            {feature.description}
-                                        </p>
-                                    </div>
+                <div className="w-full pb-8">
+                    <LogoLoop
+                        speed={280}
+                        direction="left"
+                        pauseOnHover={false}
+                        items={features.map((feature, index) => (
+                            <motion.div
+                                key={index}
+                                whileHover={{
+                                    scale: 1.08,
+                                    y: -12,
+                                    zIndex: 50,
+                                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)"
+                                }}
+                                layout
+                                transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
+                                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-md shadow-slate-200/40 w-[260px] mx-2 h-[300px] flex flex-col items-start justify-between text-left cursor-pointer"
+                            >
+                                <div className={`w-12 h-12 rounded-xl ${feature.bg} ${feature.color} flex items-center justify-center mb-4`}>
+                                    <feature.icon className="w-6 h-6" />
                                 </div>
-                            ))}
-                        />
-                    </div>
+                                <h3 className="text-base sm:text-lg font-bold mb-2 text-slate-900 leading-tight">{feature.title}</h3>
+                                <p className="text-slate-600 leading-relaxed text-xs sm:text-sm">
+                                    {feature.description}
+                                </p>
+                            </motion.div>
+                        ))}
+                    />
                 </div>
             </section>
 
             {/* Popular Destinations */}
-            <section className="section">
-                <div className="container-custom">
+            <section id="destinations" className="pt-12 pb-20 relative bg-slate-50/50 overflow-hidden">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-10 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-16"
+                        transition={{ duration: 0.6 }}
                     >
-                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4 text-slate-900">
                             Popular Destinations
                         </h2>
-                        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Discover amazing places around India and the world.
+                        <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto">
+                            Discover amazing places around the world.
                         </p>
                     </motion.div>
+                </div>
 
-                    <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    >
-                        {destinations.map((destination, index) => (
+                <div className="w-full pb-8">
+                    <LogoLoop
+                        speed={270}
+                        direction="right"
+                        pauseOnHover={false}
+                        items={destinations.map((destination, index) => (
                             <motion.div
                                 key={index}
-                                variants={itemVariants}
-                                whileHover={{ y: -8 }}
-                                className="group relative overflow-hidden rounded-2xl aspect-[4/3] cursor-pointer"
+                                whileHover={{ y: -12, scale: 1.03 }}
+                                layout
+                                transition={{ type: "tween", duration: 0.1, ease: "easeOut" }}
+                                className="group relative overflow-hidden rounded-2xl w-[260px] sm:w-[280px] h-[380px] sm:h-[400px] mx-2 cursor-pointer shadow-lg hover:shadow-2xl bg-slate-800"
                             >
-                                <Link to="/login" className="block w-full h-full">
+                                <Link to="/login" className="block w-full h-full relative">
                                     <img
                                         src={destination.image}
                                         alt={destination.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                                        loading="eager"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.parentElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                                        }}
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                                        <h3 className="text-2xl font-bold mb-1">{destination.name}</h3>
-                                        <p className="text-sm text-white/80 mb-2">{destination.country}</p>
-                                        <p className="text-sm">{destination.description}</p>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent group-hover:from-black/90 transition-all duration-300" />
+
+                                    <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                        <h3 className="text-xl sm:text-2xl font-bold mb-1.5 drop-shadow-lg">{destination.name}</h3>
+                                        <p className="text-xs sm:text-sm text-white/95 mb-2.5 font-medium flex items-center gap-1.5 drop-shadow">
+                                            <MapPin className="w-3.5 h-3.5" /> {destination.country}
+                                        </p>
+                                        <p className="text-xs sm:text-sm text-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-2 drop-shadow">
+                                            {destination.description}
+                                        </p>
                                     </div>
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
-                                            <ArrowRight className="w-5 h-5 text-white" />
+
+                                    <div className="absolute top-4 right-4 translate-x-12 group-hover:translate-x-0 transition-transform duration-300 delay-75">
+                                        <div className="p-2.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white hover:text-blue-600 transition-colors">
+                                            <ArrowRight className="w-4 h-4" />
                                         </div>
                                     </div>
                                 </Link>
                             </motion.div>
                         ))}
-                    </motion.div>
+                    />
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="section bg-gradient-to-br from-primary-600 via-purple-600 to-accent-600 text-white">
-                <div className="container-custom text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="max-w-3xl mx-auto"
-                    >
-                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
-                            Ready to Start Your Journey?
-                        </h2>
-                        <p className="text-xl text-white/90 mb-10">
-                            Join thousands of travelers who plan smarter with AI assistance.
-                        </p>
-                        <Link to="/signup">
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="btn bg-white text-primary-600 hover:bg-slate-100 shadow-2xl"
-                            >
-                                Get Started for Free
-                                <ArrowRight className="inline-block ml-2 w-5 h-5" />
-                            </motion.button>
-                        </Link>
-                    </motion.div>
+            {/* Final CTA Section */}
+            <section className="section py-32 relative overflow-hidden bg-white">
+                <div className="container-custom max-w-7xl mx-auto px-6 md:px-8">
+                    <div className="relative rounded-3xl overflow-hidden px-8 sm:px-12 py-20 text-center bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 shadow-2xl shadow-blue-900/30">
+                        {/* Glossy overlay layers */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-black/10"></div>
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.3)_0%,transparent_50%)]"></div>
+
+                        {/* Shine effect */}
+                        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-white/30 via-white/10 to-transparent rounded-full blur-3xl opacity-40"></div>
+
+                        {/* Glass reflection */}
+                        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/25 to-transparent opacity-60"></div>
+
+
+
+                        {/* Ambient light orbs */}
+                        <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-300/40 rounded-full blur-3xl"></div>
+                        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-800/30 rounded-full blur-3xl"></div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="relative z-10 max-w-3xl mx-auto"
+                        >
+                            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-white leading-tight drop-shadow-lg">
+                                Ready to plan your next trip?
+                            </h2>
+                            <p className="text-xl text-blue-50 mb-10 font-light drop-shadow-md">
+                                Join thousands of travelers getting honest, vibe-based recommendations.
+                            </p>
+                            <Link to="/signup">
+                                <Button size="lg" className="bg-white/95 backdrop-blur-sm text-blue-600 hover:bg-white hover:shadow-2xl hover:shadow-white/50 text-lg px-10 h-14 shadow-xl mb-6 rounded-xl font-bold transition-all hover:scale-105 border border-white/50">
+                                    Plan My First Trip
+                                </Button>
+                            </Link>
+                            <p className="text-sm text-blue-100 font-medium mt-4 drop-shadow">
+                                Free to try • No credit card • No commitment
+                            </p>
+                        </motion.div>
+                    </div>
                 </div>
             </section>
         </div>
